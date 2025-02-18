@@ -1,69 +1,56 @@
 #pragma once
 
-#include <cassert>
-#include <cstdlib>
-#include <algorithm>
-
-template <typename Type>
-class ArrayPtr {
+template<typename Type>
+class ArrayPtr
+{
 public:
+	ArrayPtr() = default;
 
-    ArrayPtr() = default;
+	explicit ArrayPtr(size_t size) { if (!size) data_ = nullptr; else data_ = new Type[size]; }
 
-    explicit ArrayPtr(size_t size) {
-        if(size == 0){
-            raw_ptr_ = nullptr;
-        }
-        else{
-            raw_ptr_ = new Type[size];
-        }
-        
-    }
+	ArrayPtr(const Type* ptr) noexcept : data_(ptr) {}
 
-    explicit ArrayPtr(Type* raw_ptr) noexcept {   
-        raw_ptr_ = raw_ptr;
-    }
+	ArrayPtr(const ArrayPtr& other) = delete;
 
-    ArrayPtr(const ArrayPtr&) = delete;
+	ArrayPtr& operator=(const ArrayPtr& other) = delete;
 
-    ~ArrayPtr() {
-        delete[] raw_ptr_;
-    }
+	void swap(ArrayPtr& other) noexcept
+	{
+		std::swap(data_, other.data_);
+	}
 
-    ArrayPtr& operator=(const ArrayPtr&) = delete;
+	_NODISCARD Type* Release() noexcept
+	{
+		auto tmp = data_;
+		data_ = nullptr;
+		return tmp;
+	}
 
-    [[nodiscard]] Type* Release() noexcept {
-        Type* p = raw_ptr_;
-        raw_ptr_ = nullptr;
-        return p;
-    }
+	Type& operator[](size_t index) noexcept
+	{
+		return data_[index];
+	}
 
-    Type& operator[](size_t index) noexcept {
-        return raw_ptr_[index];
-    }
+	const Type& operator[](size_t index) const noexcept
+	{
+		return data_[index];
+	}
 
-    const Type& operator[](size_t index) const noexcept {
-        return  raw_ptr_[index];
-    }
+	explicit operator bool() const
+	{
+		return data_ ? true : false;
+	}
 
-    explicit operator bool() const {
-        if(raw_ptr_ != nullptr){
-            return true;
-        }
-        else{
-            return false;
-        }
-       
-    }
+	Type* Get() const noexcept
+	{
+		return data_;
+	}
 
-    Type* Get() const noexcept {
-        return raw_ptr_;
-    }
-
-    void swap(ArrayPtr& other) noexcept {
-        std::swap(raw_ptr_, other.raw_ptr_);
-    }
+	~ArrayPtr()
+	{
+		delete[] data_;
+	}
 
 private:
-    Type* raw_ptr_ = nullptr;
+	Type* data_ = nullptr;
 };
